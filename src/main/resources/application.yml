@@ -1,0 +1,9 @@
+##spring.application.name=hexagonal-study
+
+monteiro:
+    client:
+      address:
+        url: http://locahost:8082/addresses
+spring:
+  mongodb:
+    uri: mongodb://localhost:27017/hexagonal
