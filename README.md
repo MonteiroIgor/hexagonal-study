@@ -1,4 +1,4 @@
-# hexagonal-study
+ # hexagonal-study
 
 ## Overview
 
@@ -80,3 +80,45 @@ This repository is intended as an architectural study, not a production-ready re
 ## License
 
 Add the appropriate license details for your organization or project governance.
+
+## API Endpoints
+
+Abaixo estão os contratos REST expostos por esta aplicação (exemplos para estudo). Ajuste conforme os controladores reais.
+
+- Create Customer
+  - Method: POST
+  - URL: /api/v1/customers
+  - Request (application/json):
+
+```json
+{
+  "name": "João Silva",
+  "cpf": "12345678901",
+  "email": "joao.silva@example.com",
+  "address": {
+    "street": "Rua Exemplo",
+    "city": "São Paulo",
+    "zipCode": "01000-000",
+    "state": "SP"
+  }
+}
+```
+
+  - Success: 201 Created
+    - Response body: created resource location in `Location` header and minimal payload with `id`.
+  - Errors: 400 Bad Request (validation errors), 409 Conflict (duplicate CPF)
+
+- Get Customer
+  - Method: GET
+  - URL: /api/v1/customers/{id}
+  - Success: 200 OK (customer payload)
+  - Errors: 404 Not Found
+
+- Domain Event (example)
+  - Topic: `customers.created` (Kafka)
+  - Payload: minimal domain event with `customerId`, `occurredAt` and `payload` (refer to producer adapter)
+
+Notes:
+
+- Os exemplos acima servem como contrato inicial; sincronize-os com os controladores reais em `src/main/java/com/monteiro/hexagonal_study/adapters/in/controller`.
+- Se desejar, eu posso gerar a documentação OpenAPI/Swagger automaticamente e adicionar instruções de configuração.
