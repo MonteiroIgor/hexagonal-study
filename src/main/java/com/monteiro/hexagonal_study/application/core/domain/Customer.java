@@ -2,7 +2,11 @@ package com.monteiro.hexagonal_study.application.core.domain;
 
 public class Customer {
 
-    public Customer(String id, String name, Address address, String cpf, boolean isValidCpf) {
+    public Customer() {
+        this.isValidCpf = false;
+    }
+
+    public Customer(String id, String name, Address address, String cpf, Boolean isValidCpf) {
         this.id = id;
         this.name = name;
         this.address = address;
@@ -10,15 +14,15 @@ public class Customer {
         this.isValidCpf = isValidCpf;
     }
 
-    public Customer() {
-        this.isValidCpf = false;
-    }
-
     private String id;
+
     private String name;
+
     private Address address;
+
     private String cpf;
-    private boolean isValidCpf;
+
+    private Boolean isValidCpf;
 
     public String getId() {
         return id;
@@ -52,11 +56,11 @@ public class Customer {
         this.cpf = cpf;
     }
 
-    public boolean isValidCpf() {
+    public Boolean getIsValidCpf() {
         return isValidCpf;
     }
 
-    public void setValidCpf(boolean validCpf) {
-        isValidCpf = validCpf;
+    public void setIsValidCpf(Boolean isValidCpf) {
+        this.isValidCpf = isValidCpf;
     }
 }
