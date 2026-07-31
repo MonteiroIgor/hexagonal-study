@@ -1,67 +1,68 @@
 # hexagonal-study
 
-## Overview
+## Visão Geral
 
-`hexagonal-study` é um projeto Spring Boot que demonstra a aplicação do padrão de arquitetura hexagonal (Ports and Adapters) para cadastro e validação de clientes.
+O projeto `hexagonal-study` é uma aplicação Spring Boot desenvolvida para demonstrar a implementação prática do padrão de arquitetura hexagonal (Ports and Adapters), com foco em cadastro, consulta, atualização e remoção de clientes.
 
-A implementação atual inclui:
+A solução atual integra:
 
-- REST controller para cadastro, consulta, atualização e remoção de clientes.
-- Use cases que delegam regras de negócio aos ports e adaptadores.
-- Integração Kafka para envio e recepção de eventos de validação de CPF.
-- Configuração MongoDB para persistência.
-- MapStruct para conversão entre DTOs e modelos de domínio.
-- Feign client habilitado para potencial integração com serviços externos.
+- API REST para gestão de clientes;
+- Casos de uso para orquestração da regra de negócio;
+- Persistência em MongoDB;
+- Mensageria com Kafka para validação assíncrona de CPF;
+- Mapeamento entre DTOs e modelo de domínio com MapStruct;
+- Integração com um serviço de endereço via Feign.
 
-## Implementação
+## Arquitetura
 
-### Camadas principais
+A estrutura do projeto segue a separação entre domínio, portas e adaptadores:
 
-- `application.core.domain` — classes de domínio `Customer` e `Address`.
-- `application.core.usecase` — caso de uso `InsertCustomerUseCase` com orquestração de busca de endereço, persistência e envio de CPF para validação.
-- `application.ports.in` — portas de entrada para operações de cliente (`Insert`, `Find`, `Update`, `Delete`).
-- `application.ports.out` — portas de saída para persistência, busca de endereço e envio de CPF.
-- `adapters/in/controller` — controlador REST e mapeadores de DTO.
-- `adapters/in/consumer` — consumidor Kafka que escuta validações de CPF.
-- `config` — configuração Kafka de producer/consumer.
+- `application/core/domain` — modelos de domínio, como `Customer` e `Address`.
+- `application/core/usecase` — implementações dos casos de uso, como `InsertCustomerUseCase`, `FindCustomerByIdUseCase`, `UpdateCustomerUseCase` e `DeleteCustomerByIdUseCase`.
+- `application/ports/in` — portas de entrada da aplicação.
+- `application/ports/out` — portas de saída para persistência, busca de endereço e envio de eventos.
+- `adapters/in/controller` — camada de entrada REST.
+- `adapters/in/consumer` — consumidor Kafka.
+- `adapters/out` — adaptadores concretos para MongoDB, consulta de endereço e publicação em Kafka.
+- `config` — configuração de producer e consumer Kafka.
 
-### Comportamento atual
+## Fluxo de Negócio
 
-- `POST /api/v1/customers`
-  - Recebe `CustomerRequest` com `name`, `cpf` e `zipCode`.
-  - Busca o endereço a partir do CEP via port de saída.
-  - Persiste o cliente via port de saída de inserção.
-  - Envia o CPF para validação através de Kafka.
-- `GET /api/v1/customers/{id}`
-  - Retorna o cliente com `name`, `cpf`, `address` e `isValidCpf`.
-- `PUT /api/v1/customers/{id}`
-  - Atualiza o cliente existente a partir do corpo de requisição.
-- `DELETE /api/v1/customers/{id}`
-  - Remove o cliente pelo ID.
+Os principais fluxos implementados são:
 
-### Integração Kafka
+- `POST /api/v1/customers` — cria um cliente, busca o endereço pelo CEP, salva o registro e envia o CPF para validação.
+- `GET /api/v1/customers/{id}` — consulta um cliente pelo identificador.
+- `PUT /api/v1/customers/{id}` — atualiza um cliente existente.
+- `DELETE /api/v1/customers/{id}` — remove um cliente.
 
-- `KafkaProducerConfig` configura producer para `localhost:9092`.
-- `KafkaConsumerConfig` configura consumer para o tópico `tp-cpf-validate` e grupo `monteiro`.
-- `ReceiveValidateCpfConsumer` consome mensagens `CustomerMessage` e encaminha para `UpdateCustomerInputPort`.
+## Integração com Kafka
 
-## Projeto
+A aplicação utiliza Kafka para processamento assíncrono de validação de CPF. O fluxo inclui:
 
-- `src/main/java/com/monteiro/hexagonal_study`
-  - `adapters/in/controller` — controlador REST e mapeadores.
-  - `adapters/in/consumer` — consumidor Kafka e mapeamento de mensagem.
-  - `application/core/domain` — entidades de domínio.
-  - `application/core/usecase` — casos de uso da aplicação.
-  - `application/ports/in` — interfaces de entrada.
-  - `application/ports/out` — interfaces de saída.
-  - `config` — configuração de Kafka.
+- `KafkaProducerConfig` e `KafkaConsumerConfig` para configuração do broker local;
+- envio de mensagens para o tópico `tp-cpf-validate`;
+- consumo das mensagens por `ReceiveValidateCpfConsumer`, que encaminha a atualização ao caso de uso apropriado.
 
-## Build and Run
+## Execução Local
 
-### Requirements
+### Pré-requisitos
 
 - Java 21
 - Maven 3.9+
+- Docker Desktop para subir os serviços auxiliares
+
+### Subir infraestrutura local
+
+```bash
+docker compose -f docker-local/docker-compose.yml up -d
+```
+
+Os containers disponibilizam:
+
+- Kafka e Zookeeper;
+- Kafdrop;
+- MongoDB;
+- Mongo Express.
 
 ### Build
 
@@ -69,41 +70,35 @@ A implementação atual inclui:
 ./mvnw clean package
 ```
 
-### Run
+### Executar a aplicação
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-Ou execute o JAR gerado:
+A aplicação ficará disponível em:
 
-```bash
-java -jar target/hexagonal-study-0.0.1-SNAPSHOT.jar
+```text
+http://localhost:8081
 ```
 
-## Testing
+## Configuração
 
-Execute os testes com:
+O arquivo principal de configuração está em `src/main/resources/application.yml`.
 
-```bash
-./mvnw test
-```
+Valores configurados atualmente:
 
-## Configuration
+- Porta da aplicação: `8081`
+- MongoDB local: `localhost:27017`
+- Banco MongoDB: `hexagonal-study`
+- Usuário MongoDB: `root`
+- Senha MongoDB: `example`
+- Endpoint de endereço: `http://localhost:8082/addresses`
+- Broker Kafka local: `localhost:9092`
 
-A configuração principal está em `src/main/resources/application.yml`.
+## Contrato da API
 
-Valores atuais:
-
-- `spring.mongodb.uri` = `mongodb://localhost:27017/hexagonal`
-- `monteiro.client.address.url` = `http://locahost:8082/addresses` (nota: o host está configurado como `locahost` no arquivo atual)
-- Kafka broker local: `localhost:9092`
-
-> Observação: os beans de Kafka em `KafkaConsumerConfig` e `KafkaProducerConfig` usam `localhost:9092` como broker padrão.
-
-## API Contract
-
-### CustomerRequest
+### Requisição: CustomerRequest
 
 ```json
 {
@@ -113,7 +108,7 @@ Valores atuais:
 }
 ```
 
-### CustomerResponse
+### Resposta: CustomerResponse
 
 ```json
 {
@@ -128,26 +123,12 @@ Valores atuais:
 }
 ```
 
-### Endpoints
+## Exemplos de Requisições
 
-- `POST /api/v1/customers`
-  - Cria um cliente.
-  - Retorna `200 OK` com corpo vazio no estado atual.
-- `GET /api/v1/customers/{id}`
-  - Retorna `200 OK` com o cliente.
-- `PUT /api/v1/customers/{id}`
-  - Atualiza o cliente.
-  - Retorna `204 No Content`.
-- `DELETE /api/v1/customers/{id}`
-  - Remove o cliente.
-  - Retorna `204 No Content`.
-
-## cURL Examples
-
-### Create customer
+### Criar cliente
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/customers \
+curl -X POST http://localhost:8081/api/v1/customers \
   -H "Content-Type: application/json" \
   -d '{
     "name": "João Silva",
@@ -156,16 +137,16 @@ curl -X POST http://localhost:8080/api/v1/customers \
   }'
 ```
 
-### Get customer
+### Consultar cliente
 
 ```bash
-curl http://localhost:8080/api/v1/customers/{id}
+curl http://localhost:8081/api/v1/customers/{id}
 ```
 
-### Update customer
+### Atualizar cliente
 
 ```bash
-curl -X PUT http://localhost:8080/api/v1/customers/{id} \
+curl -X PUT http://localhost:8081/api/v1/customers/{id} \
   -H "Content-Type: application/json" \
   -d '{
     "name": "João Silva Atualizado",
@@ -174,35 +155,12 @@ curl -X PUT http://localhost:8080/api/v1/customers/{id} \
   }'
 ```
 
-### Delete customer
+### Excluir cliente
 
 ```bash
-curl -X DELETE http://localhost:8080/api/v1/customers/{id}
+curl -X DELETE http://localhost:8081/api/v1/customers/{id}
 ```
 
-## Kafka Example
+## Considerações Finais
 
-### Topic
-
-- `tp-cpf-validate`
-
-### Payload
-
-```json
-{
-  "name": "João Silva",
-  "cpf": "12345678901",
-  "zipCode": "01000-000"
-}
-```
-
-O consumidor `ReceiveValidateCpfConsumer` escuta esse tópico e encaminha a mensagem para o `UpdateCustomerInputPort`.
-
-## Observações
-
-- A implementação usa `@EnableFeignClients` na classe principal, mas a integração real com um client Feign de endereço ainda depende de implementação adicional.
-- O projeto serve como estudo de arquitetura; algumas portas de saída (`InsertCustomerOutputPort`, `FindAddressByZipCodeOutputPort`, `SendCpfForValidationOutputPort`) são definidas como contratos e não estão necessariamente mapeadas para um adapter completo dentro do código presente.
-
-## License
-
-Adicione a licença apropriada para sua organização ou projeto.
+Este projeto funciona como um estudo prático de arquitetura hexagonal, demonstrando a separação entre domínio, casos de uso e adaptadores para integração com sistemas externos e infraestrutura.
