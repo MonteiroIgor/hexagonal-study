@@ -13,7 +13,7 @@ import com.monteiro.hexagonal_study.application.core.usecase.InsertCustomerUseCa
 public class FindCostumerByIdConfig {
 
     @Bean
-    public FindCustomerByIdUseCase insertCustomerUserCase(
+    public FindCustomerByIdUseCase findCustomerByIdUseCase(
         FindCustomerByIdAdapter findCustomerByIdAdapter
         
     ){
