@@ -70,6 +70,93 @@ Os containers disponibilizam:
 ./mvnw clean package
 ```
 
+### Executar apenas os testes unitários
+
+Para rodar somente os testes unitários (sem empacotar ou executar a aplicação), utilize o comando padrão do Maven:
+
+```bash
+./mvnw test
+```
+
+Exemplos úteis:
+
+- Rodar apenas uma classe de teste específica:
+
+```bash
+./mvnw -Dtest=MinhaClasseTest test
+```
+
+- Rodar apenas um método de teste específico dentro de uma classe:
+
+```bash
+./mvnw -Dtest=MinhaClasseTest#meuMetodo test
+```
+
+- Exibir stacktraces completos / saída mais detalhada (útil para depuração):
+
+```bash
+./mvnw -DtrimStackTrace=false test
+```
+
+Observações:
+
+- O plugin Surefire executa os testes durante a fase `test` (normalmente usado para testes unitários). O plugin Failsafe, quando configurado, executa testes de integração na fase `verify`. Para rodar também testes de integração, use `./mvnw verify`.
+- Em geral, `./mvnw test` é suficiente para executar apenas os testes unitários do projeto.
+
+---
+
+### Teste de arquitetura (ArchUnit)
+
+Este projeto inclui um teste de arquitetura ArchUnit localizado em `src/test/java/.../architecture/LayeredArchitectureTest.java`.
+
+- Para executar somente o teste de arquitetura:
+
+```bash
+./mvnw -Dtest=LayeredArchitectureTest test
+```
+
+### Como ignorar o teste de arquitetura ao rodar os unitários
+
+Se for necessário não executar o teste de arquitetura ao rodar os testes unitários, algumas abordagens práticas:
+
+1) Rodar somente testes que seguem um padrão de nomes (recomendado se houver convenção de nomes para unit tests):
+
+```bash
+# exemplo: executar apenas classes que terminam com "*UnitTest"
+./mvnw -Dtest=*UnitTest test
+```
+
+2) Mover o teste de arquitetura para a categoria de "integração" e usar Failsafe (prática comum):
+
+- Renomear o teste para terminar em `*IT.java` (ex.: `LayeredArchitectureIT.java`) e deixá-lo em `src/test/java` ou em `src/integration-test/java` conforme sua convenção.
+- Executar unitários com:
+
+```bash
+./mvnw test
+```
+
+- Executar integração/arquitetura com:
+
+```bash
+./mvnw verify
+```
+
+3) Excluir especificamente o arquivo via configuração do Surefire (no POM) ou usando um arquivo de exclusões. Exemplo (alteração no POM):
+
+```xml
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-surefire-plugin</artifactId>
+  <configuration>
+    <excludes>
+      <exclude>**/LayeredArchitectureTest.java</exclude>
+    </excludes>
+  </configuration>
+</plugin>
+```
+
+Observação: algumas formas de exclusão/filtragem via linha de comando dependem da versão do Maven Surefire; por isso as opções 1 ou 2 (padrões de nome ou mover para Failsafe) são as mais portáteis. Se desejar, aplico uma das mudanças automaticamente (por exemplo, mover/renomear o teste para *IT ou adicionar a configuração do Surefire).
+
 ### Executar a aplicação
 
 ```bash
