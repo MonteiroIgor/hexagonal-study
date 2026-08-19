@@ -1,6 +1,5 @@
 package com.monteiro.hexagonal_study.architecture;
 
-import org.springframework.boot.test.context.SpringBootTest;
 
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -9,7 +8,6 @@ import com.tngtech.archunit.lang.ArchRule;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 
 @AnalyzeClasses(packages = "com.monteiro.hexagonal_study")
-@SpringBootTest
 public class LayeredArchitectureTest {
 
     @ArchTest
